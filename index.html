@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arqueo de Caja</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+    h2 {
+      text-align: center;
+      color: #e60000;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .row label {
+      flex: 1;
+    }
+    .row input {
+      width: 80px;
+      text-align: right;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      background-color: #e60000;
+      color: white;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #cc0000;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    input,
+    textarea{
+      touch-action: manipulation;
+      font-size: 10px;
+    }
+  </style>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  </head>
+</head>
+<body>
+  <div class="container">
+    <h2>Arqueo de Caja</h2>
+    <input type="text" id="nombreArqueo" placeholder="Nombre del arqueo (ej. Turno Mañana)">
+    <form id="cashForm">
+      <div class="row"><label>$1:</label><input type="number" min="0" value="" data-value="1"></div>
+      <div class="row"><label>$5:</label><input type="number" min="0" value="" data-value="5"></div>
+      <div class="row"><label>$10:</label><input type="number" min="0" value="" data-value="10"></div>
+      <div class="row"><label>$20:</label><input type="number" min="0" value="" data-value="20"></div>
+      <div class="row"><label>$50:</label><input type="number" min="0" value="" data-value="50"></div>
+      <div class="row"><label>$100:</label><input type="number" min="0" value="" data-value="100"></div>
+    </form>
+    <div class="total">Total: $<span id="total">0.00</span></div>
+    <button onclick="calcularTotal()">Calcular Total</button>
+    <button onclick="generarPDF()">Exportar a PDF</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    function calcularTotal() {
+      const inputs = document.querySelectorAll('#cashForm input');
+      let total = 0;
+      inputs.forEach(input => {
+        const cantidad = parseInt(input.value) || 0;
+        const valor = parseFloat(input.dataset.value);
+        total += cantidad * valor;
+      });
+      document.getElementById('total').textContent = total.toFixed(2);
+    }
+
+    async function generarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const nombreArqueo = document.getElementById('nombreArqueo').value.trim() || 'Sin nombre';
+      const fechaHora = new Date().toLocaleString();
+
+      doc.setFontSize(16);
+      doc.text(`Arqueo de Caja - ${nombreArqueo}`, 20, 20);
+      doc.setFontSize(12);
+      doc.text(`Fecha y hora: ${fechaHora}`, 20, 30);
+
+      const inputs = document.querySelectorAll('#cashForm input');
+      let y = 50;
+      let total = 0;
+
+      inputs.forEach(input => {
+        const valor = parseFloat(input.dataset.value);
+        const cantidad = parseInt(input.value) || 0;
+        const subtotal = cantidad * valor;
+        total += subtotal;
+        doc.text(`$${valor.toFixed(2)} x ${cantidad} = $${subtotal.toFixed(2)}`, 20, y);
+        y += 10;
+      });
+
+      doc.text(`Total: $${total.toFixed(2)}`, 20, y + 10);
+      doc.save(`arqueo_${nombreArqueo.replace(/\s+/g, '_')}.pdf`);
+    }
+  </script>
+</body>
+</html>
